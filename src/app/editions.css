@@ -1,0 +1,307 @@
+/* ─────────────────────────────────────────────────────────────
+   "Editions" paper-catalogue sub-theme
+   Scoped under .ed — used by /catalogue and /register only.
+   Rules: radius 0, no gradients, no shadows; vermilion only for
+   markers, active states, focus and the progress spine.
+   ───────────────────────────────────────────────────────────── */
+
+.ed {
+  --ed-ground: #e8e6df;
+  --ed-ground-2: #dedbd2;
+  --ed-ink: #151515;
+  --ed-ink-2: #494844;
+  --ed-muted: #75736c;
+  --ed-vermilion: #c4442c;
+  --ed-hairline: rgba(21, 21, 21, 0.16);
+
+  background-color: var(--ed-ground);
+  color: var(--ed-ink);
+  font-family: var(--font-spline-mono), monospace;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ed ::selection {
+  background: var(--ed-ink);
+  color: var(--ed-ground);
+}
+
+.ed-display {
+  font-family: var(--font-familjen), sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+}
+
+.ed-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--ed-ink);
+}
+
+.ed-mono {
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ed-mono-body {
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ed-vermilion {
+  color: var(--ed-vermilion);
+}
+
+.ed-hairline-t {
+  border-top: 1px solid var(--ed-hairline);
+}
+
+.ed-hairline {
+  border: 1px solid var(--ed-hairline);
+}
+
+.ed-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--ed-hairline);
+  border-radius: 0;
+  padding: 12px 16px;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ed-ink);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.ed-input::placeholder {
+  color: var(--ed-muted);
+}
+
+.ed-input:focus {
+  border-color: var(--ed-vermilion);
+}
+
+.ed-btn-ink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--ed-ink);
+  color: var(--ed-ground);
+  border: 1px solid var(--ed-ink);
+  border-radius: 0;
+  padding: 16px 24px;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.ed-btn-ink:hover {
+  background: var(--ed-ink-2);
+  border-color: var(--ed-ink-2);
+}
+
+.ed-btn-ink:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ed-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--ed-ink);
+  border: 1px solid var(--ed-hairline);
+  border-radius: 0;
+  padding: 16px 24px;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.ed-btn-outline:hover {
+  border-color: var(--ed-ink);
+}
+
+.ed-marker {
+  width: 8px;
+  height: 8px;
+  background: var(--ed-vermilion);
+  flex-shrink: 0;
+}
+
+/* Fixed progress spine — width driven by scroll position via JS */
+.ed-spine {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: var(--ed-vermilion);
+  z-index: 100;
+}
+
+/* Fixed vertical rail down the left page edge */
+.ed-rail {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 34px;
+  background: var(--ed-ground);
+  border-right: 1px solid var(--ed-hairline);
+  z-index: 90;
+  writing-mode: vertical-rl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Inspect controls — vertical stack pinned right at mid height */
+.ed-inspect {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--ed-hairline);
+  border: 1px solid var(--ed-hairline);
+  border-right: 0;
+}
+
+.ed-inspect-btn {
+  position: relative;
+  background: var(--ed-ground);
+  border: 0;
+  border-radius: 0;
+  padding: 12px 16px 12px 20px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ed-muted);
+  transition: color 0.2s;
+}
+
+.ed-inspect-btn:hover {
+  color: var(--ed-ink);
+}
+
+.ed-inspect-btn[aria-pressed="true"] {
+  color: var(--ed-ink);
+}
+
+.ed-inspect-btn[aria-pressed="true"]::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--ed-vermilion);
+}
+
+/* Ghost numeral behind the hero subject */
+.ed-ghost {
+  position: absolute;
+  bottom: 2vh;
+  right: -2vw;
+  font-family: var(--font-familjen), sans-serif;
+  font-size: clamp(220px, 44vw, 660px);
+  font-weight: 700;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(21, 21, 21, 0.07);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  will-change: transform;
+}
+
+/* Blur reveal — start states are applied ONLY under .ed-motion,
+   which JS adds when prefers-reduced-motion is not set. The
+   reduced-motion and no-JS renders are the finished page. */
+.ed-motion [data-reveal] {
+  opacity: 0;
+  transform: translateY(26px);
+  filter: blur(9px);
+}
+
+.ed-motion [data-reveal-subject] {
+  filter: blur(14px);
+}
+
+.ed-motion .ed-revealed[data-reveal] {
+  animation: ed-blur-reveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.ed-motion .ed-revealed[data-reveal-subject] {
+  animation: ed-subject-reveal 1s 0.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes ed-blur-reveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes ed-subject-reveal {
+  to {
+    filter: blur(0);
+  }
+}
+
+/* Ink-line illustration placeholder (diagonal hatching) */
+.ed-plate {
+  border: 1px solid var(--ed-hairline);
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--ed-hairline) 0px,
+    var(--ed-hairline) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+}
+
+/* Hero copy swap (inspect controls change the edition) */
+.ed-swap {
+  transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ed-swapping .ed-swap {
+  opacity: 0;
+  filter: blur(6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ed-swap,
+  .ed-inspect-btn,
+  .ed-btn-ink,
+  .ed-btn-outline,
+  .ed-input {
+    transition: none !important;
+  }
+}
