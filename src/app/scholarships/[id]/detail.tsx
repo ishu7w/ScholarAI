@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
   ChevronRight,
+  Loader2,
   Scale,
   Sparkles,
   TrendingUp,
@@ -19,14 +21,42 @@ import ChatAssistant from "@/components/chat/ChatAssistant";
 import ScoreRing from "@/components/ui/ScoreRing";
 import { Badge, GlassCard, ProgressBar } from "@/components/ui/primitives";
 import { computeAIScore, matchScholarship } from "@/lib/ai-engine";
-import { DEMO_STUDENT, SCHOLARSHIPS } from "@/lib/data";
+import { applyAction, withdrawAction } from "@/lib/applications/actions";
+import type { ApplicationRecord } from "@/lib/datasource";
+import type { Scholarship, StudentProfile } from "@/lib/types";
 import { daysUntil, formatCurrency, formatDate } from "@/lib/utils";
 
-export default function ScholarshipDetail({ scholarshipId }: { scholarshipId: string }) {
-  const scholarship = SCHOLARSHIPS.find((s) => s.id === scholarshipId)!;
-  const match = matchScholarship(DEMO_STUDENT, scholarship);
-  const ai = computeAIScore(DEMO_STUDENT);
-  const [applied, setApplied] = useState(false);
+export default function ScholarshipDetail({
+  scholarship,
+  student,
+  application,
+  canApply,
+}: {
+  scholarship: Scholarship;
+  /** null when signed out or profile incomplete. */
+  student: StudentProfile | null;
+  application: ApplicationRecord | null;
+  canApply: boolean;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  // No profile → no invented numbers. Show the program, not a fake score.
+  const match = student ? matchScholarship(student, scholarship) : null;
+  const ai = student ? computeAIScore(student) : null;
+  const applied = Boolean(application && application.status !== "draft");
+
+  const onApply = () => {
+    setError(null);
+    startTransition(async () => {
+      const result = applied
+        ? await withdrawAction(scholarship.id)
+        : await applyAction(scholarship.id);
+      if (!result.ok) setError(result.error);
+      else router.refresh();
+    });
+  };
 
   return (
     <DashboardShell title={scholarship.name} subtitle={scholarship.provider}>
@@ -90,6 +120,7 @@ export default function ScholarshipDetail({ scholarshipId }: { scholarshipId: st
           </motion.div>
 
           {/* explainability */}
+          {match && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -155,8 +186,10 @@ export default function ScholarshipDetail({ scholarshipId }: { scholarshipId: st
               </div>
             </GlassCard>
           </motion.div>
+          )}
 
           {/* score breakdown */}
+          {ai && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -186,6 +219,7 @@ export default function ScholarshipDetail({ scholarshipId }: { scholarshipId: st
               </div>
             </GlassCard>
           </motion.div>
+          )}
         </div>
 
         {/* sidebar */}
@@ -197,43 +231,102 @@ export default function ScholarshipDetail({ scholarshipId }: { scholarshipId: st
           >
             <GlassCard className="text-center">
               <h2 className="font-semibold">AI match verdict</h2>
-              <div className="mt-4 flex justify-center gap-6">
-                <ScoreRing value={match.matchScore} size={110} label="match" />
-                <ScoreRing
-                  value={match.winProbability}
-                  size={110}
-                  label="win prob"
-                  color="#c4442c"
-                />
-              </div>
-              <Badge
-                tone={match.eligible ? "success" : "warning"}
-                className="mt-5"
-              >
-                {match.eligible ? "You are eligible" : "Not yet eligible"}
-              </Badge>
-
-              <button
-                onClick={() => setApplied(true)}
-                disabled={applied || !match.eligible}
-                className="btn-primary mt-5 w-full"
-              >
-                {applied ? (
-                  <>
-                    <CheckCircle2 className="h-4 w-4" /> Application submitted
-                  </>
-                ) : match.eligible ? (
-                  <>
-                    Apply now <ChevronRight className="h-4 w-4" />
-                  </>
-                ) : (
-                  "Fix criteria to apply"
-                )}
-              </button>
-              {applied && (
-                <p className="mt-3 text-xs text-muted">
-                  Tracked in your application pipeline. Documents auto-attached.
+              {match ? (
+                <>
+                  <div className="mt-4 flex justify-center gap-6">
+                    <ScoreRing value={match.matchScore} size={110} label="match" />
+                    <ScoreRing
+                      value={match.winProbability}
+                      size={110}
+                      label="win prob"
+                      color="#c4442c"
+                    />
+                  </div>
+                  <Badge tone={match.eligible ? "success" : "warning"} className="mt-5">
+                    {match.eligible ? "You are eligible" : "Not yet eligible"}
+                  </Badge>
+                </>
+              ) : (
+                <p className="mt-4 text-sm leading-relaxed text-muted">
+                  Sign in and complete your academic profile to see your match
+                  score, win probability and a full explainability report for
+                  this program.
                 </p>
+              )}
+
+              {canApply && match ? (
+                <button
+                  onClick={onApply}
+                  disabled={pending || (!applied && !match.eligible)}
+                  className={applied ? "btn-ghost mt-5 w-full" : "btn-primary mt-5 w-full"}
+                >
+                  {pending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {applied ? "Withdrawing…" : "Submitting…"}
+                    </>
+                  ) : applied ? (
+                    "Withdraw application"
+                  ) : match.eligible ? (
+                    <>
+                      Apply now <ChevronRight className="h-4 w-4" />
+                    </>
+                  ) : (
+                    "Fix criteria to apply"
+                  )}
+                </button>
+              ) : (
+                <Link href="/login" className="btn-primary mt-5 w-full">
+                  Sign in to apply <ChevronRight className="h-4 w-4" />
+                </Link>
+              )}
+
+              {error && (
+                <p role="alert" className="mono-label mt-3 text-primary">
+                  {error}
+                </p>
+              )}
+
+              {applied && application && (
+                <div className="mt-4 border-t border-[rgba(21,21,21,0.16)] pt-4 text-left">
+                  <div className="mono-label mb-2 text-muted">
+                    Submitted {application.submittedAt ? formatDate(application.submittedAt) : ""}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="mono-label text-muted">Status</span>
+                    <Badge
+                      tone={
+                        application.status === "approved"
+                          ? "success"
+                          : application.status === "rejected"
+                            ? "danger"
+                            : "warning"
+                      }
+                    >
+                      {application.status === "under_review"
+                        ? "Under review"
+                        : application.status[0].toUpperCase() + application.status.slice(1)}
+                    </Badge>
+                  </div>
+                  {application.aiSnapshot && (
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="mono-label text-muted">Score at submit</span>
+                      <span className="mono-label">
+                        {application.aiSnapshot.matchScore}% match
+                      </span>
+                    </div>
+                  )}
+                  {application.rejectionReasons.length > 0 && (
+                    <ul className="mt-3 space-y-1.5">
+                      {application.rejectionReasons.map((r) => (
+                        <li key={r} className="flex items-start gap-2 text-xs text-muted">
+                          <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-danger" />
+                          {r}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               )}
             </GlassCard>
           </motion.div>

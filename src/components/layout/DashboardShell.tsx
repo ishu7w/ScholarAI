@@ -4,9 +4,9 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bell,
   BookOpen,
   Building2,
+  FileCheck2,
   GraduationCap,
   LayoutDashboard,
   LogOut,
@@ -14,15 +14,19 @@ import {
   ScanSearch,
   Shield,
   Trophy,
+  UserCog,
   X,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/primitives";
+import NotificationBell from "@/components/layout/NotificationBell";
 import { useSession } from "@/components/providers/SessionProvider";
 import { signOutAction } from "@/lib/auth/actions";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/dashboard/student", label: "Student Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/student/profile", label: "My Profile", icon: UserCog },
+  { href: "/dashboard/student/documents", label: "Documents", icon: FileCheck2 },
   { href: "/scholarships", label: "Scholarships", icon: Trophy },
   { href: "/catalogue", label: "Catalogue", icon: BookOpen },
   { href: "/resume-analyzer", label: "Resume Analyzer", icon: ScanSearch },
@@ -50,6 +54,8 @@ export default function DashboardShell({
     if (item.href === "/dashboard/institution") return user.role === "institution" || user.role === "admin";
     if (item.href === "/dashboard/admin") return user.role === "admin";
     if (item.href === "/dashboard/student") return user.role === "student" || user.role === "admin";
+    if (item.href === "/dashboard/student/profile") return user.role === "student";
+    if (item.href === "/dashboard/student/documents") return user.role === "student";
     return true;
   });
 
@@ -162,13 +168,7 @@ export default function DashboardShell({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              className="relative flex h-10 w-10 cursor-pointer items-center justify-center text-muted transition-colors hover:bg-[rgba(21,21,21,0.05)] hover:text-foreground"
-              aria-label="Notifications"
-            >
-              <Bell className="h-4.5 w-4.5" />
-              <span className="absolute right-2.5 top-2.5 h-1.5 w-1.5 bg-primary" />
-            </button>
+            <NotificationBell />
             <Link
               href="/scholarships"
               className="btn-primary hidden !px-4 !py-2 text-sm sm:inline-flex"
