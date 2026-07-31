@@ -4,14 +4,25 @@ import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { resetPasswordAction } from "@/lib/auth/actions";
 
 export default function ForgotPasswordPage() {
   const [state, setState] = useState<"idle" | "loading" | "sent">("idle");
 
-  const submit = (e: React.FormEvent) => {
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setState("loading");
-    setTimeout(() => setState("sent"), 900);
+    setError(null);
+    const email = String(new FormData(e.currentTarget).get("email") ?? "");
+    const result = await resetPasswordAction(email);
+    if (result.ok) {
+      setState("sent");
+    } else {
+      setError(result.error);
+      setState("idle");
+    }
   };
 
   return (
@@ -51,6 +62,15 @@ export default function ForgotPasswordPage() {
               autoComplete="email"
             />
           </div>
+          {error && (
+            <div
+              role="alert"
+              className="hairline flex items-center gap-3 border-primary px-4 py-3"
+            >
+              <span className="h-2 w-2 shrink-0 bg-primary" aria-hidden />
+              <span className="mono-label text-primary">{error}</span>
+            </div>
+          )}
           <button
             type="submit"
             disabled={state === "loading"}

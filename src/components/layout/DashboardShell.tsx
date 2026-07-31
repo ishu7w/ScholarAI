@@ -9,6 +9,7 @@ import {
   Building2,
   GraduationCap,
   LayoutDashboard,
+  LogOut,
   Menu,
   ScanSearch,
   Shield,
@@ -16,6 +17,8 @@ import {
   X,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/primitives";
+import { useSession } from "@/components/providers/SessionProvider";
+import { signOutAction } from "@/lib/auth/actions";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -38,6 +41,17 @@ export default function DashboardShell({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  // Real signed-in profile, injected by the segment layout.
+  const user = useSession();
+
+  // Role-scoped navigation: never advertise a dashboard the user can't open.
+  const nav = NAV.filter((item) => {
+    if (!user) return true;
+    if (item.href === "/dashboard/institution") return user.role === "institution" || user.role === "admin";
+    if (item.href === "/dashboard/admin") return user.role === "admin";
+    if (item.href === "/dashboard/student") return user.role === "student" || user.role === "admin";
+    return true;
+  });
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -51,7 +65,7 @@ export default function DashboardShell({
       </Link>
 
       <nav className="mt-8 flex-1 space-y-1" aria-label="Dashboard navigation">
-        {NAV.map((item) => {
+        {nav.map((item) => {
           const active = pathname === item.href;
           return (
             <Link
@@ -78,12 +92,26 @@ export default function DashboardShell({
         })}
       </nav>
 
-      <div className="glass mt-4 flex items-center gap-3 p-3">
-        <Avatar name="Aarya Sharma" hue={258} size={36} />
-        <div className="min-w-0">
-          <div className="truncate text-sm font-medium">Aarya Sharma</div>
-          <div className="truncate text-xs text-muted">aarya@university.edu</div>
+      <div className="mt-4">
+        <div className="glass flex items-center gap-3 p-3">
+          <Avatar
+            name={user?.name ?? "Guest"}
+            hue={user?.avatarHue ?? 258}
+            size={36}
+          />
+          <div className="min-w-0">
+            <div className="truncate text-sm font-medium">{user?.name ?? "Guest"}</div>
+            <div className="truncate text-xs text-muted">{user?.email ?? "not signed in"}</div>
+          </div>
         </div>
+        <form action={signOutAction}>
+          <button
+            type="submit"
+            className="mono-label mt-2 flex w-full cursor-pointer items-center gap-2 border border-[rgba(21,21,21,0.16)] px-4 py-2.5 text-muted transition-colors hover:border-foreground hover:text-foreground"
+          >
+            <LogOut className="h-3.5 w-3.5" /> Sign out
+          </button>
+        </form>
       </div>
     </div>
   );

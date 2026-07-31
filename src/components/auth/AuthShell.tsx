@@ -79,6 +79,8 @@ export function PasswordInput({
   );
 }
 
+/** @deprecated Kept for reference only — real auth lives in
+ *  src/lib/auth/actions.ts. Remove once no callers remain. */
 export function useFakeAuth(redirect: string) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -86,7 +88,6 @@ export function useFakeAuth(redirect: string) {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // demo auth — no backend, just a premium-feeling transition
     setTimeout(() => router.push(redirect), 900);
   };
 

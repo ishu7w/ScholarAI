@@ -8,9 +8,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { Check, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useFakeAuth } from "@/components/auth/AuthShell";
+import { signUpAction } from "@/lib/auth/actions";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
@@ -72,24 +73,42 @@ export default function RegisterPage() {
     field: FIELDS[0],
     achievements: "",
   });
-  const { loading, submit } = useFakeAuth(
-    role === "student" ? "/dashboard/student" : "/dashboard/institution"
-  );
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const set = (key: keyof typeof form) => (value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
 
   const goTo = (next: number) => {
     setDirection(next > step ? 1 : -1);
+    setError(null);
     setStep(next);
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (step < 3) {
-      e.preventDefault();
       goTo(step + 1);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const result = await signUpAction({
+      role,
+      name: form.name,
+      email: form.email,
+      password: form.password,
+      cgpa: form.gpa || undefined,
+      year: form.year || undefined,
+      field: form.field,
+      achievementsText: form.achievements || undefined,
+    });
+    if (result.ok) {
+      router.push(role === "student" ? "/dashboard/student" : "/dashboard/institution");
     } else {
-      submit(e);
+      setError(result.error);
+      setLoading(false);
     }
   };
 
@@ -350,6 +369,15 @@ export default function RegisterPage() {
             </HeightTransition>
 
             {/* Footer actions */}
+            {error && (
+              <div
+                role="alert"
+                className="mt-8 flex items-center gap-3 border border-[var(--ed-vermilion)] px-4 py-3"
+              >
+                <span className="ed-marker" aria-hidden />
+                <span className="ed-mono text-[var(--ed-vermilion)]">{error}</span>
+              </div>
+            )}
             <div className="mt-14 flex items-center justify-between border-t border-[var(--ed-hairline)] pt-8">
               {step > 1 ? (
                 <button
