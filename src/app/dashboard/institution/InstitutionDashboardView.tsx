@@ -30,9 +30,15 @@ import {
 } from "recharts";
 import DashboardShell from "@/components/layout/DashboardShell";
 import { Avatar, Badge, GlassCard, ProgressBar, StatPill } from "@/components/ui/primitives";
+import { useRealtime, type RealtimeEvent } from "@/hooks/useRealtime";
 import type { ApplicationStatus, InstitutionAggregates } from "@/lib/datasource";
 import { decideApplicationAction } from "@/lib/institution/actions";
 import type { FraudReport, StudentProfile } from "@/lib/types";
+
+// New submissions arrive as INSERTs; withdrawal/decision races arrive as
+// UPDATEs. Module scope keeps the reference stable across re-renders so the
+// channel is created exactly once.
+const QUEUE_EVENTS: readonly RealtimeEvent[] = ["INSERT", "UPDATE"];
 
 const PIE_COLORS = ["#151515", "#c4442c", "#75736c", "#494844", "#96762a", "#4a6741", "#a8a49a"];
 
@@ -102,6 +108,19 @@ export default function InstitutionDashboardView({
   const [pending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Live queue. No filter is passed: an institution cares about every
+  // application to any of its programs, and the owning scholarship is not a
+  // column on `applications`, so it cannot be expressed as a Realtime
+  // filter. The RLS policy "institution reads apps" already restricts the
+  // stream to applications against this institution's scholarships, so the
+  // socket carries nothing this account could not read anyway.
+  //
+  // The default reaction (router.refresh()) re-runs the server component
+  // that ranks the queue through ai-engine.ts — the ranking is never
+  // recomputed client-side, so a live row is scored the same way a
+  // refreshed one is. No-ops in demo mode.
+  useRealtime("applications", null, undefined, { events: QUEUE_EVENTS });
 
   const fraudFlagged = applicants.filter((r) => r.fraud.level !== "clear");
   const pendingQueue = applicants.filter(

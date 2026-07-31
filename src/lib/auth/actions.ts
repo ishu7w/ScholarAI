@@ -12,8 +12,28 @@ import { redirect } from "next/navigation";
 import { getSupabaseServer, getSupabaseAdmin } from "@/lib/supabase/server";
 import { isLiveMode, hasDatabase } from "@/lib/env";
 import { db, schema } from "@/lib/db/client";
+import { checkRateLimit, formatRetryAfter } from "@/lib/rate-limit";
 
 export type AuthResult = { ok: true } | { ok: false; error: string };
+
+// Per-email throttles on the credential endpoints. Keyed on the submitted
+// email so one account's lockout never affects another's — and deliberately
+// NOT on whether that email exists, which would leak account existence.
+const LIMITS = {
+  signIn: { limit: 8, windowMs: 15 * 60 * 1000 },
+  signUp: { limit: 5, windowMs: 60 * 60 * 1000 },
+  reset: { limit: 3, windowMs: 60 * 60 * 1000 },
+} as const;
+
+/** Uniform throttle copy. Says nothing about whether the email is registered. */
+function throttled(retryAfterMs: number): string {
+  return `Too many attempts. Try again in ${formatRetryAfter(retryAfterMs)}.`;
+}
+
+/** Normalized bucket key — case/whitespace variants must share one bucket. */
+function emailKey(action: keyof typeof LIMITS, email: string): string {
+  return `${action}:${email.trim().toLowerCase()}`;
+}
 
 const signUpSchema = z.object({
   role: z.enum(["student", "institution"]),
@@ -33,6 +53,15 @@ export async function signUpAction(input: unknown): Promise<AuthResult> {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
   const data = parsed.data;
+
+  // Throttled before any mode branch, so demo and live enforce the same
+  // ceiling and the limit is never silently absent on a misconfigured deploy.
+  const gate = checkRateLimit(
+    emailKey("signUp", data.email),
+    LIMITS.signUp.limit,
+    LIMITS.signUp.windowMs
+  );
+  if (!gate.allowed) return { ok: false, error: throttled(gate.retryAfterMs) };
 
   if (!isLiveMode()) return { ok: true }; // demo mode: simulated success
 
@@ -127,6 +156,16 @@ export async function signInAction(input: unknown): Promise<SignInResult> {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
+  // Throttled on the submitted email before any credential check, so the
+  // response timing and text are identical for registered and unknown
+  // addresses — this must not become an account-existence oracle.
+  const gate = checkRateLimit(
+    emailKey("signIn", parsed.data.email),
+    LIMITS.signIn.limit,
+    LIMITS.signIn.windowMs
+  );
+  if (!gate.allowed) return { ok: false, error: throttled(gate.retryAfterMs) };
+
   if (!isLiveMode()) return { ok: true, redirectTo: "/dashboard/student" };
 
   const supabase = await getSupabaseServer();
@@ -169,6 +208,17 @@ export async function signOutAction(): Promise<void> {
 export async function resetPasswordAction(email: string): Promise<AuthResult> {
   const check = z.string().trim().email().safeParse(email);
   if (!check.success) return { ok: false, error: "Enter a valid email" };
+
+  // Same uniform throttle message whether or not the address is registered;
+  // the reset endpoint already answers identically for both cases and the
+  // limit must not be the thing that distinguishes them.
+  const gate = checkRateLimit(
+    emailKey("reset", check.data),
+    LIMITS.reset.limit,
+    LIMITS.reset.windowMs
+  );
+  if (!gate.allowed) return { ok: false, error: throttled(gate.retryAfterMs) };
+
   if (!isLiveMode()) return { ok: true };
 
   const supabase = await getSupabaseServer();

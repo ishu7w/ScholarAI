@@ -14,8 +14,10 @@ import {
 } from "lucide-react";
 import DashboardShell from "@/components/layout/DashboardShell";
 import ChatAssistant from "@/components/chat/ChatAssistant";
+import { useSession } from "@/components/providers/SessionProvider";
 import ScoreRing from "@/components/ui/ScoreRing";
 import { Badge, GlassCard, ProgressBar, StatPill } from "@/components/ui/primitives";
+import { useRealtime } from "@/hooks/useRealtime";
 import { computeAIScore, generateRoadmap, rankScholarships } from "@/lib/ai-engine";
 import type { ApplicationRecord } from "@/lib/datasource";
 import type { Scholarship, StudentProfile } from "@/lib/types";
@@ -48,6 +50,22 @@ export default function StudentDashboardView({
   applications: ApplicationRecord[];
 }) {
   const appliedIds = applications.map((a) => a.scholarshipId);
+  const user = useSession();
+
+  // A decision made by an institution lands here without a refresh: the
+  // status badge under "Your applications" updates as soon as the row does.
+  // Filtered to this student's rows so the socket carries nothing else —
+  // the "student reads own apps" RLS policy enforces the same server-side.
+  // Default reaction is router.refresh(), so the statuses still come from
+  // the server component's query rather than a client-side guess.
+  // No-ops in demo mode, where there is no Supabase client.
+  useRealtime(
+    "applications",
+    user ? `student_id=eq.${user.id}` : null,
+    undefined,
+    { enabled: Boolean(user) }
+  );
+
   const ai = computeAIScore(student);
   const ranked = rankScholarships(student, scholarships);
   const topMatches = ranked.filter((r) => r.eligible).slice(0, 3);

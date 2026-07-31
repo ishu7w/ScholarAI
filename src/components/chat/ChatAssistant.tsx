@@ -1,70 +1,62 @@
 "use client";
 
-// Deterministic AI chat assistant — intent-matched responses driven by the
-// same explainable engine that powers scoring, so answers stay consistent.
+// AI chat assistant — answers come from POST /api/chat, which grounds every
+// figure in the caller's own rows (their score, matches, applications and
+// deadlines). The server picks Claude or the deterministic intent matcher;
+// this component just renders whatever reply comes back.
 
 import { useEffect, useRef, useState } from "react";
 import { Bot, Send, Sparkles, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { DEMO_STUDENT, SCHOLARSHIPS } from "@/lib/data";
-import { computeAIScore, generateRoadmap, rankScholarships } from "@/lib/ai-engine";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface Msg {
   role: "user" | "ai";
   text: string;
 }
 
-function answer(q: string): string {
-  const lower = q.toLowerCase();
-  const ai = computeAIScore(DEMO_STUDENT);
-  const ranked = rankScholarships(DEMO_STUDENT, SCHOLARSHIPS);
-  const top = ranked.filter((r) => r.eligible).slice(0, 3);
+const SIGN_IN_PROMPT =
+  "Please sign in to ask about your scholarships — I answer from your own profile, matches and applications, so I need to know who you are.";
 
-  if (/(score|profile)/.test(lower)) {
-    return `Your AI profile score is ${ai.total}/100 with ${ai.confidence}% confidence. Top strengths: ${ai.strengths.join(", ")}. Biggest gaps: ${ai.gaps.join(", ") || "none — well balanced!"}. The score is a weighted sum — Academic 22%, Financial Need 18%, Achievements 12%, Research 10%, and so on. Open AI Insights for the full breakdown.`;
+const GENERIC_ERROR =
+  "I couldn't reach the copilot just now. Please try that again in a moment.";
+
+/** Recent turns give the copilot conversational continuity. The server caps
+ *  and validates this too — it is never trusted as a source of facts. */
+const HISTORY_TURNS = 8;
+
+async function askCopilot(
+  message: string,
+  history: Msg[]
+): Promise<string> {
+  let res: Response;
+  try {
+    res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        history: history.slice(-HISTORY_TURNS).map((m) => ({
+          role: m.role,
+          content: m.text,
+        })),
+      }),
+    });
+  } catch {
+    return GENERIC_ERROR;
   }
-  if (/(recommend|match|which scholarship|best scholarship)/.test(lower)) {
-    return `Based on your profile, your top matches are:\n${top
-      .map(
-        (r, i) =>
-          `${i + 1}. ${r.scholarship.name} — ${r.matchScore}% match, ~${r.winProbability}% win probability (${formatCurrency(r.scholarship.amount)})`
-      )
-      .join("\n")}\nEach match is explainable — tap a card to see exactly why it was selected.`;
+
+  if (res.status === 401) return SIGN_IN_PROMPT;
+
+  let data: { reply?: string; error?: string } | null = null;
+  try {
+    data = await res.json();
+  } catch {
+    return GENERIC_ERROR;
   }
-  if (/(eligib|qualify)/.test(lower)) {
-    const eligibleCount = ranked.filter((r) => r.eligible).length;
-    return `You're currently eligible for ${eligibleCount} of ${SCHOLARSHIPS.length} tracked scholarships. The most common blockers on the rest: research publication requirements and location restrictions. Your CGPA of ${DEMO_STUDENT.cgpa} clears most merit gates.`;
-  }
-  if (/(improve|better|roadmap|suggest)/.test(lower)) {
-    const rm = generateRoadmap(DEMO_STUDENT).slice(0, 3);
-    return `Here's your highest-impact plan:\n${rm
-      .map((r) => `• ${r.quarter}: ${r.title} (+${r.impact} pts projected)`)
-      .join("\n")}\nFull personalized roadmap is on your dashboard.`;
-  }
-  if (/(sop|statement)/.test(lower)) {
-    return `Your SOP currently scores ${DEMO_STUDENT.sopQuality}/100. To improve: 1) open with a specific moment, not a generic ambition; 2) quantify outcomes ("built X used by Y people"); 3) name the exact program and why it fits; 4) close with a 5-year goal. Want a paragraph-by-paragraph template? Check Help Center → SOP Guide.`;
-  }
-  if (/(reject|why not|denied)/.test(lower)) {
-    const blocked = ranked.find((r) => !r.eligible);
-    if (blocked) {
-      return `Take ${blocked.scholarship.name}: you're not eligible because — ${blocked.missingCriteria.join("; ")}. That's the full reason; nothing hidden. Fix path: ${blocked.improvements[0] ?? "review criteria on the scholarship page"}.`;
-    }
-    return "You have no rejected applications right now.";
-  }
-  if (/(deadline|when|date)/.test(lower)) {
-    const soon = [...SCHOLARSHIPS].sort(
-      (a, b) => +new Date(a.deadline) - +new Date(b.deadline)
-    )[0];
-    return `Closest deadline: ${soon.name} on ${new Date(soon.deadline).toLocaleDateString("en-US", { month: "long", day: "numeric" })}. Your dashboard calendar tracks all ${SCHOLARSHIPS.length} deadlines with reminders.`;
-  }
-  if (/(fraud|verify|document)/.test(lower)) {
-    return "Documents are verified through the OCR pipeline: text extraction → field validation → cross-document consistency checks → anomaly flags. Verification status appears on each document card. Institutions only see the verification result, never your raw documents, unless you apply.";
-  }
-  if (/(hello|hi|hey)/.test(lower)) {
-    return `Hi ${DEMO_STUDENT.name.split(" ")[0]}! I'm your scholarship copilot. Ask me about your score, recommendations, eligibility, deadlines, or how to improve your profile.`;
-  }
-  return `I can help with: "What's my profile score?", "Which scholarships match me?", "Why was I rejected?", "How do I improve?", "What deadlines are coming?", or "How does document verification work?"`;
+
+  if (!res.ok) return data?.error ?? GENERIC_ERROR;
+  return data?.reply ?? GENERIC_ERROR;
 }
 
 export default function ChatAssistant() {
@@ -83,16 +75,17 @@ export default function ChatAssistant() {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs, typing, open]);
 
-  const send = () => {
-    const q = input.trim();
+  const send = (question?: string) => {
+    const q = (question ?? input).trim();
     if (!q || typing) return;
+    const history = msgs;
     setMsgs((m) => [...m, { role: "user", text: q }]);
     setInput("");
     setTyping(true);
-    setTimeout(() => {
-      setMsgs((m) => [...m, { role: "ai", text: answer(q) }]);
+    void askCopilot(q, history).then((reply) => {
+      setMsgs((m) => [...m, { role: "ai", text: reply }]);
       setTyping(false);
-    }, 700);
+    });
   };
 
   return (
