@@ -31,7 +31,7 @@ export default function GlobalError({
         </div>
 
         <h1
-          className="font-[family-name:var(--font-familjen)] font-bold uppercase leading-[0.95] tracking-[-0.035em] text-5xl sm:text-6xl"
+          className="font-[family-name:var(--font-familjen)] font-bold uppercase leading-[1.02] tracking-[-0.035em] text-5xl sm:text-6xl pb-[0.05em]"
           style={{ color: "var(--foreground)" }}
         >
           Something{" "}

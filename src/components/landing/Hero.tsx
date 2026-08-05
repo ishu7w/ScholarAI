@@ -100,24 +100,32 @@ export default function Hero() {
   return (
     <section
       ref={ref}
-      className="grid-bg relative flex min-h-screen items-center overflow-hidden pt-28 pb-16"
+      className="relative flex min-h-screen items-center overflow-hidden pt-28 pb-16"
     >
+      {/* Grid sits on its own layer: .grid-bg carries a mask-image, and a CSS
+          mask applies to the whole subtree — on the section it faded out the
+          sub-headline, CTAs, stats row and visualization along with the grid. */}
+      <div className="grid-bg pointer-events-none absolute inset-0" aria-hidden />
       <div className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-12 px-6 lg:grid-cols-2">
         <div>
           <div data-hero-badge className="mono-label mb-6 text-primary">
             Explainable AI — Trusted by 40+ institutions
           </div>
 
+          {/* Each line is clipped by its own wrapper for the slide-up reveal.
+              The wrappers need bottom room or they crop descenders and the
+              outlined line's stroke; the negative margin keeps the visual
+              spacing between lines unchanged. */}
           <h1 className="font-[family-name:var(--font-space-grotesk)] text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
-            <span className="block overflow-hidden">
+            <span className="block overflow-hidden pb-[0.12em] mb-[-0.12em]">
               <span data-hero-line className="block">Every deserving student,</span>
             </span>
-            <span className="block overflow-hidden">
+            <span className="block overflow-hidden pb-[0.12em] mb-[-0.12em]">
               <span data-hero-line className="block">
                 <span className="text-outline">matched by AI.</span>
               </span>
             </span>
-            <span className="block overflow-hidden">
+            <span className="block overflow-hidden pb-[0.12em] mb-[-0.12em]">
               <span data-hero-line className="block">Every decision, explained.</span>
             </span>
           </h1>

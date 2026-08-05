@@ -112,10 +112,13 @@ h4 {
   color: var(--foreground);
 }
 
-/* Outlined display words — the typographic signature */
+/* Outlined display words — the typographic signature.
+   The stroke is painted centred on the glyph path, so outlined text needs a
+   touch more room than filled text at the same size. */
 .text-outline {
   color: transparent;
   -webkit-text-stroke: 1px var(--foreground);
+  padding-bottom: 0.04em;
 }
 
 .grid-bg {

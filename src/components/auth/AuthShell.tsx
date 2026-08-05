@@ -18,7 +18,10 @@ export function AuthShell({
   footer: ReactNode;
 }) {
   return (
-    <div className="grid-bg relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-16">
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-16">
+      {/* Grid sits on its own layer: .grid-bg carries a mask-image, which would
+          otherwise fade out the card along with the grid lines. */}
+      <div className="grid-bg pointer-events-none absolute inset-0" aria-hidden />
       <motion.div
         initial={{ opacity: 0, y: 26, filter: "blur(9px)" }}
         animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}

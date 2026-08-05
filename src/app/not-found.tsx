@@ -13,7 +13,7 @@ export default function NotFound() {
           </span>
         </div>
 
-        <h1 className="font-[family-name:var(--font-familjen)] font-bold uppercase leading-[0.95] tracking-[-0.035em] text-5xl sm:text-6xl">
+        <h1 className="font-[family-name:var(--font-familjen)] font-bold uppercase leading-[1.02] tracking-[-0.035em] text-5xl sm:text-6xl pb-[0.05em]">
           Nothing{" "}
           <span
             style={{ WebkitTextStroke: "1px var(--foreground)", color: "transparent" }}

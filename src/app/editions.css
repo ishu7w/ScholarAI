@@ -30,7 +30,12 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: -0.035em;
-  line-height: 0.95;
+  /* Was 0.95 — a sub-1 line-height put descenders and the bottom of uppercase
+     glyphs outside the line box, so they were clipped by any ancestor that
+     clips overflow (and by SplitText's line masks). 1.02 keeps the tight
+     editorial look while leaving the glyphs inside their box. */
+  line-height: 1.02;
+  padding-bottom: 0.05em;
 }
 
 .ed-outline {

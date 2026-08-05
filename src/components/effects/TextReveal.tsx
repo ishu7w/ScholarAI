@@ -32,7 +32,17 @@ export default function TextReveal({
         type: "lines",
         mask: "lines",
         autoSplit: true,
+        // The mask wrappers clip to the line box. Uppercase display type with
+        // tight leading overflows that box, so the bottom of every line stays
+        // clipped after the reveal finishes. Pad each wrapper and pull the
+        // padding back out of the layout so nothing shifts.
         onSplit(self) {
+          for (const line of self.lines) {
+            const wrapper = line.parentElement;
+            if (!wrapper) continue;
+            wrapper.style.paddingBottom = "0.14em";
+            wrapper.style.marginBottom = "-0.14em";
+          }
           return gsap.from(self.lines, {
             yPercent: 110,
             duration: 0.9,
