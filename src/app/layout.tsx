@@ -1,25 +1,25 @@
 import type { Metadata } from "next";
-import { Familjen_Grotesk, Spline_Sans_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const familjenGrotesk = Familjen_Grotesk({
+const familjenGrotesk = localFont({
+  src: "./fonts/familjen-grotesk-latin.woff2",
   variable: "--font-familjen",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: "500 700",
 });
 
 // Alias: legacy headings reference --font-space-grotesk — point it at
 // the Editions display face so every heading converts without edits.
-const displayAlias = Familjen_Grotesk({
+const displayAlias = localFont({
+  src: "./fonts/familjen-grotesk-latin.woff2",
   variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: "500 700",
 });
 
-const splineSansMono = Spline_Sans_Mono({
+const splineSansMono = localFont({
+  src: "./fonts/spline-sans-mono-latin.woff2",
   variable: "--font-spline-mono",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: "400 600",
 });
 
 export const metadata: Metadata = {
