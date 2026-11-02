@@ -29,11 +29,12 @@ export async function applyAction(scholarshipId: string): Promise<ActionResult> 
   }
 
   const ds = await getDataSource();
-  const [scholarship, profile, existing] = await Promise.all([
-    ds.getScholarship(scholarshipId),
+  const [scholarships, profile, existing] = await Promise.all([
+    ds.getScholarships(),
     ds.getStudentProfile(me.id),
     ds.getApplication(me.id, scholarshipId),
   ]);
+  const scholarship = scholarships.find((item) => item.id === scholarshipId) ?? null;
 
   if (!scholarship) return { ok: false, error: "Scholarship not found" };
   if (!profile) return { ok: false, error: "Complete your profile before applying" };
@@ -49,6 +50,12 @@ export async function applyAction(scholarshipId: string): Promise<ActionResult> 
   // Freeze the engine's verdict at submit time.
   const score = computeAIScore(profile);
   const match = matchScholarship(profile, scholarship);
+  if (!match.eligible) {
+    return {
+      ok: false,
+      error: `You do not meet the eligibility criteria: ${match.missingCriteria.join("; ")}`,
+    };
+  }
   const snapshot = {
     total: score.total,
     confidence: score.confidence,
@@ -65,7 +72,7 @@ export async function applyAction(scholarshipId: string): Promise<ActionResult> 
       studentId: me.id,
       status: "submitted",
       aiSnapshot: snapshot,
-      rejectionReasons: match.eligible ? [] : match.missingCriteria,
+      rejectionReasons: [],
       submittedAt: new Date().toISOString(),
       decidedAt: null,
     });
@@ -77,7 +84,7 @@ export async function applyAction(scholarshipId: string): Promise<ActionResult> 
         studentId: me.id,
         status: "submitted",
         aiSnapshot: snapshot,
-        rejectionReasons: match.eligible ? [] : match.missingCriteria,
+        rejectionReasons: [],
         submittedAt: new Date(),
       })
       .onConflictDoNothing();

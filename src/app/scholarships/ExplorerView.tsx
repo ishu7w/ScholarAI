@@ -8,6 +8,7 @@ import DashboardShell from "@/components/layout/DashboardShell";
 import ChatAssistant from "@/components/chat/ChatAssistant";
 import { Badge, GlassCard, ProgressBar } from "@/components/ui/primitives";
 import { rankScholarships } from "@/lib/ai-engine";
+import { useRealtime } from "@/hooks/useRealtime";
 import { cn, daysUntil, formatCurrency } from "@/lib/utils";
 import type { Scholarship, ScholarshipCategory, StudentProfile } from "@/lib/types";
 
@@ -29,6 +30,12 @@ export default function ExplorerView({
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
   const [eligibleOnly, setEligibleOnly] = useState(false);
+
+  // Published program changes refresh this server-backed catalogue in every
+  // open student browser. Database RLS limits the stream to visible rows.
+  useRealtime("scholarships", null, undefined, {
+    events: ["INSERT", "UPDATE", "DELETE"],
+  });
 
   const ranked = useMemo(
     () =>
