@@ -15,7 +15,7 @@ import { revalidatePath } from "next/cache";
 import { count, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/lib/db/client";
-import { hasDatabase, isLiveMode } from "@/lib/env";
+import { hasDatabase } from "@/lib/env";
 import { getSessionProfile, type SessionProfile } from "@/lib/auth/session";
 import { MONTHLY_APPLICATIONS, SCHOLARSHIPS, generateApplicants } from "@/lib/data";
 
@@ -70,11 +70,8 @@ const ROLES = ["student", "institution", "admin"] as const;
 async function adminOnly(): Promise<SessionProfile | null> {
   const me = await getSessionProfile();
   if (!me) return null;
-  // Pure demo mode (zero env) has no real identity and no database: the
-  // seeded persona may read the demo aggregates, and every write below
-  // still no-ops. As soon as Supabase is configured, roles come from the
-  // profiles row and only a real admin passes.
-  if (!isLiveMode() && !hasDatabase()) return me;
+  // Demo mode has explicit role-specific demo sessions. Do not let a
+  // student or institution demo session read admin-only data.
   return me.role === "admin" ? me : null;
 }
 

@@ -9,6 +9,7 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { getSupabaseServer, getSupabaseAdmin } from "@/lib/supabase/server";
 import { isLiveMode, hasDatabase } from "@/lib/env";
 import { db, schema } from "@/lib/db/client";
@@ -66,6 +67,11 @@ export async function signUpAction(input: unknown): Promise<AuthResult> {
   if (!gate.allowed) return { ok: false, error: throttled(gate.retryAfterMs) };
 
   if (!isLiveMode() || !hasDatabase()) {
+    if (!isLiveMode() && !hasDatabase()) {
+      // A registration attempt means the user intends a real account. Clear
+      // any sample session so it cannot look like account creation worked.
+      (await cookies()).delete(DEMO_ROLE_COOKIE);
+    }
     return {
       ok: false,
       error:
@@ -168,6 +174,33 @@ export type SignInResult =
   | { ok: true; redirectTo: string }
   | { ok: false; error: string };
 
+const DEMO_ROLE_COOKIE = "scholarai-demo-role";
+const demoRoleSchema = z.enum(["student", "institution", "admin"]);
+
+/** Explicit demo entry is available only when no real identity or database
+ *  is configured. Regular email/password sign-in never falls back to demo. */
+export async function enterDemoAction(roleInput: unknown): Promise<SignInResult> {
+  const parsedRole = demoRoleSchema.safeParse(roleInput);
+  if (!parsedRole.success) return { ok: false, error: "Choose a valid demo role" };
+  if (isLiveMode() || hasDatabase()) {
+    return {
+      ok: false,
+      error: "Demo sessions are only available in demo mode. Use the seeded demo account credentials instead.",
+    };
+  }
+
+  const store = await cookies();
+  store.set(DEMO_ROLE_COOKIE, parsedRole.data, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 8,
+  });
+
+  return { ok: true, redirectTo: dashboardForRole(parsedRole.data) };
+}
+
 export async function signInAction(input: unknown): Promise<SignInResult> {
   const parsed = signInSchema.safeParse(input);
   if (!parsed.success) {
@@ -185,6 +218,10 @@ export async function signInAction(input: unknown): Promise<SignInResult> {
   if (!gate.allowed) return { ok: false, error: throttled(gate.retryAfterMs) };
 
   if (!isLiveMode() || !hasDatabase()) {
+    if (!isLiveMode() && !hasDatabase()) {
+      // Real credentials must never leave an explicit sample identity active.
+      (await cookies()).delete(DEMO_ROLE_COOKIE);
+    }
     return {
       ok: false,
       error:
@@ -224,21 +261,25 @@ export async function signInAction(input: unknown): Promise<SignInResult> {
     return { ok: false, error: "This account has been disabled" };
   }
   const role = rows[0].role;
-  const redirectTo =
-    role === "admin"
-      ? "/dashboard/admin"
-      : role === "institution"
-        ? "/dashboard/institution"
-        : "/dashboard/student";
-  return { ok: true, redirectTo };
+  return { ok: true, redirectTo: dashboardForRole(role) };
 }
 
 export async function signOutAction(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(DEMO_ROLE_COOKIE);
   if (isLiveMode()) {
     const supabase = await getSupabaseServer();
     await supabase?.auth.signOut();
   }
   redirect("/");
+}
+
+function dashboardForRole(role: "student" | "institution" | "admin"): string {
+  return role === "admin"
+    ? "/dashboard/admin"
+    : role === "institution"
+      ? "/dashboard/institution"
+      : "/dashboard/student";
 }
 
 export async function resetPasswordAction(email: string): Promise<AuthResult> {

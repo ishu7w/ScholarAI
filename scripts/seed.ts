@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import postgres from "postgres";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { createClient } from "@supabase/supabase-js";
 import * as schema from "../src/lib/db/schema";
@@ -77,7 +78,7 @@ async function main() {
 
     for (const acct of DEMO_ACCOUNTS) {
       // Idempotent: find existing user by email, else create.
-      const { data: list } = await admin.auth.admin.listUsers();
+      const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
       let user = list?.users.find((u) => u.email === acct.email);
       if (!user) {
         const { data, error } = await admin.auth.admin.createUser({
@@ -132,6 +133,7 @@ async function main() {
         const existing = await db
           .select()
           .from(schema.institutions)
+          .where(eq(schema.institutions.profileId, user.id))
           .limit(1);
         if (existing.length === 0) {
           await db.insert(schema.institutions).values({

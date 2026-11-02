@@ -16,7 +16,7 @@ The app runs in one of two modes, chosen at runtime by which environment variabl
 |---|---|---|
 | **Trigger** | no env vars set | `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` set (auth), `DATABASE_URL` set (data) |
 | **Data** | deterministic seed data from `src/lib/data.ts`, in module memory | Postgres via Drizzle |
-| **Auth** | signed out; login and registration are disabled until real services are configured | real Supabase Auth, three roles, RLS-enforced |
+| **Auth** | explicit student, institution, and admin demo entries; arbitrary credentials are rejected | real Supabase Auth, three roles, RLS-enforced |
 | **Writes** | applications persist in memory for the session; institution/admin writes no-op | persisted, audit-logged |
 | **Uploads** | unavailable (no storage backend) | private Supabase Storage bucket + verification pipeline |
 | **Realtime** | no socket; the notification bell polls | Postgres CDC on `notifications` and `applications` |
@@ -34,7 +34,7 @@ npm run dev
 
 Open http://localhost:3000. No env file, no database, no API keys.
 
-Demo mode is signed out. Public scholarship pages can be explored, but protected dashboards require a real Supabase Auth session and a matching database profile. Demo mode never accepts arbitrary credentials or substitutes a demo identity for a real account.
+The login page offers separate **Student demo**, **Institution demo**, and **Admin demo** entries when live services are not configured. These open sample dashboards without accepting or pretending to authenticate email/password credentials. When Supabase and Postgres are configured, the demo entries disappear; seeded demo accounts and real accounts both authenticate through Supabase and open the role stored in their database profile.
 
 ### Quickstart — live mode
 
