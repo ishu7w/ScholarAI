@@ -8,6 +8,7 @@ import {
   Brain,
   FileSearch,
   Fingerprint,
+  HandCoins,
   MessageSquareText,
   Route,
   ScanLine,
@@ -182,6 +183,11 @@ const FEATURES = [
     icon: Route,
     title: "Personal roadmap",
     body: "Quarter-by-quarter improvement plan with projected score impact for each action.",
+  },
+  {
+    icon: HandCoins,
+    title: "Financial aid planner",
+    body: "Estimate your study-cost gap, track application tasks, and find official scholarship and grant programs worldwide.",
   },
   {
     icon: BarChart3,

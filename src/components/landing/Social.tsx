@@ -310,6 +310,7 @@ export function Footer() {
             title: "Product",
             links: [
               ["Scholarships", "/scholarships"],
+              ["Financial Aid Planner", "/financial-aid"],
               ["Catalogue", "/catalogue"],
               ["Resume Analyzer", "/resume-analyzer"],
               ["AI Insights", "/dashboard/student"],

@@ -20,6 +20,9 @@
 --     caller's scholarships and status <> 'draft'), "admin reads apps".
 --     An institution therefore never sees another institution's queue,
 --     and nobody sees anyone's drafts.
+--   * scholarships → "anyone reads active" plus "owner reads own", so
+--     students receive published program changes and institutions receive
+--     changes to their own programs.
 --
 -- The client-side `filter:` strings (profile_id=eq.…, student_id=eq.…) are
 -- a bandwidth optimisation on top of that, not the security boundary. If a
@@ -36,6 +39,22 @@ begin
     select 1 from pg_publication where pubname = 'supabase_realtime'
   ) then
     create publication supabase_realtime;
+  end if;
+end
+$$;
+
+-- scholarships — refreshes the student catalogue when a program is
+-- published or its visible details/criteria change.
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'scholarships'
+  ) then
+    alter publication supabase_realtime add table public.scholarships;
   end if;
 end
 $$;
@@ -74,8 +93,8 @@ $$;
 -- UPDATE/DELETE events carry only the primary key in `old` by default.
 -- REPLICA IDENTITY FULL ships the whole previous row, which is what lets a
 -- subscriber tell a status transition (submitted → approved) from an
--- unrelated column edit. Both tables are low-volume, so the extra WAL is
--- cheap; idempotent because setting the same identity twice is harmless.
+-- unrelated column edit. Notifications and applications are low-volume,
+-- so the extra WAL is cheap. Setting the same identity twice is harmless.
 alter table public.notifications replica identity full;
 alter table public.applications  replica identity full;
 

@@ -1,0 +1,172 @@
+export type FundingOpportunity = {
+  name: string;
+  provider: string;
+  destination: string;
+  level: string;
+  type: string;
+  coverage: string;
+  eligibility: string;
+  application: string;
+  officialUrl: string;
+  tags: string[];
+};
+
+// Curated links and summaries point to official sources. Deadlines and
+// eligibility vary by country, institution, and annual call; no cycle dates
+// or award totals are guessed here.
+export const FUNDING_OPPORTUNITIES: FundingOpportunity[] = [
+  {
+    name: "Chevening Scholarships",
+    provider: "UK Foreign, Commonwealth & Development Office",
+    destination: "United Kingdom",
+    level: "One-year master's",
+    type: "Government scholarship",
+    coverage: "Fully funded: tuition, living allowance, travel, and other eligible costs",
+    eligibility: "For citizens of eligible countries with an undergraduate degree, qualifying work experience, leadership potential, and a commitment to return home for at least two years. Course and country rules apply.",
+    application: "Apply through the Chevening application portal and select three eligible UK master's courses. Check your country page for the current cycle.",
+    officialUrl: "https://www.chevening.org/scholarships/",
+    tags: ["Leadership", "International", "Government"],
+  },
+  {
+    name: "Erasmus Mundus Joint Masters",
+    provider: "European Commission · Erasmus+",
+    destination: "Europe and partner countries",
+    level: "Joint master's",
+    type: "Programme scholarship",
+    coverage: "Competitive scholarships can cover participation costs and contribute to travel, visa, and living costs",
+    eligibility: "Open to applicants worldwide who hold a bachelor's degree or are in their final year and graduate before the master's starts. Requirements are set by each consortium.",
+    application: "Choose a programme in the Erasmus Mundus catalogue and apply directly to its coordinating institution. Most calls run between October and January.",
+    officialUrl: "https://erasmus-plus.ec.europa.eu/opportunities/individuals/students/erasmus-mundus-joint-masters",
+    tags: ["International", "Master's", "Multiple countries"],
+  },
+  {
+    name: "Rhodes Scholarship",
+    provider: "Rhodes Trust · University of Oxford",
+    destination: "United Kingdom",
+    level: "Postgraduate",
+    type: "Fully funded scholarship",
+    coverage: "Oxford course fees, annual stipend, and specified travel and settling-in costs; tenure depends on course",
+    eligibility: "Applicants must meet the age, academic, and constituency requirements for the place where they apply. Criteria and deadlines differ by constituency; the Global scholarship is currently suspended.",
+    application: "Apply through the Rhodes constituency connected to your citizenship, residency, or education. A Rhodes award does not itself replace Oxford admission.",
+    officialUrl: "https://www.rhodeshouse.ox.ac.uk/scholarships/",
+    tags: ["Leadership", "Postgraduate", "Oxford"],
+  },
+  {
+    name: "Mastercard Foundation Scholars Program",
+    provider: "Mastercard Foundation partner institutions",
+    destination: "Africa and partner campuses worldwide",
+    level: "Undergraduate and postgraduate",
+    type: "Partner-managed scholarship",
+    coverage: "Comprehensive support varies by partner institution and program",
+    eligibility: "Designed to support academically talented young people facing socioeconomic barriers, with leadership potential and a commitment to give back. Partner-specific criteria apply.",
+    application: "Apply directly to a participating university or organization. Each partner sets its own process, admission requirements, and deadline; the Foundation does not charge application fees.",
+    officialUrl: "https://mastercardfdn.org/en/what-we-do/our-programs/mastercard-foundation-scholars-program/where-to-apply/",
+    tags: ["Need-based", "Leadership", "Partner institution"],
+  },
+  {
+    name: "DAAD Scholarships",
+    provider: "German Academic Exchange Service",
+    destination: "Germany",
+    level: "Graduate study and research (program dependent)",
+    type: "Government-funded grants",
+    coverage: "Program-dependent stipend; some calls include travel, insurance, research, or other allowances",
+    eligibility: "DAAD calls differ by country of origin, academic status, subject, and proposed study or research. Many programs focus on graduates, doctoral candidates, and researchers.",
+    application: "Search the DAAD scholarship database, open a specific call, and follow its eligibility and deadline instructions. A general DAAD page is not itself an application.",
+    officialUrl: "https://www.daad.de/en/studying-in-germany/scholarships/daad-scholarships/",
+    tags: ["Research", "International", "Germany"],
+  },
+  {
+    name: "Fulbright Foreign Student Program",
+    provider: "U.S. Department of State · Fulbright",
+    destination: "United States",
+    level: "Graduate study and research",
+    type: "International exchange grant",
+    coverage: "Grant terms and eligible costs are set by the local Fulbright program",
+    eligibility: "For non-U.S. applicants seeking graduate study or research in the United States. Eligibility, fields, and selection are administered country by country.",
+    application: "Apply through the Fulbright Commission or U.S. Embassy serving your country; do not use a single global deadline as country timelines differ.",
+    officialUrl: "https://foreign.fulbrightonline.org/",
+    tags: ["Graduate", "Research", "International"],
+  },
+  {
+    name: "Knight-Hennessy Scholars",
+    provider: "Stanford University",
+    destination: "United States",
+    level: "Stanford graduate degrees",
+    type: "University fellowship",
+    coverage: "Tuition and fees, living and academic stipend, and annual travel support for up to three years, subject to degree rules",
+    eligibility: "Applicants must also apply to and enroll in an eligible full-time Stanford graduate degree. Cohort-specific degree and prior-graduation rules apply.",
+    application: "Apply separately to Knight-Hennessy Scholars and the Stanford graduate program. Check the current cohort requirements and deadlines on the official site.",
+    officialUrl: "https://knight-hennessy.stanford.edu/",
+    tags: ["Leadership", "Graduate", "Stanford"],
+  },
+  {
+    name: "Japanese Government (MEXT) Scholarship",
+    provider: "Japan Ministry of Education, Culture, Sports, Science and Technology",
+    destination: "Japan",
+    level: "Undergraduate, graduate, and specialized programs",
+    type: "Government scholarship",
+    coverage: "Tuition exemption, monthly stipend, and travel support under applicable program rules",
+    eligibility: "There are several tracks with different age, education, and subject requirements. Applicants generally use an embassy recommendation or a university recommendation.",
+    application: "Follow the current application guidelines through the Japanese embassy in your country or a participating Japanese university. Local schedules vary.",
+    officialUrl: "https://www.studyinjapan.go.jp/en/planning/scholarships/mext-scholarships/",
+    tags: ["Government", "International", "Japan"],
+  },
+  {
+    name: "Commonwealth Master's Scholarships",
+    provider: "Commonwealth Scholarship Commission in the UK",
+    destination: "United Kingdom",
+    level: "Full-time taught master's",
+    type: "Government-funded scholarship",
+    coverage: "Tuition and other eligible support are defined by the current award terms",
+    eligibility: "For applicants from eligible low- and middle-income Commonwealth countries, with additional country, academic, and development-impact requirements. Nominating agencies may set their own rules.",
+    application: "Check the current call, eligible-country list, and your country's nominating agency. Calls and deadlines are cycle-specific.",
+    officialUrl: "https://cscuk.fcdo.gov.uk/scholarships/commonwealth-masters-scholarships/",
+    tags: ["Government", "Master's", "Development"],
+  },
+  {
+    name: "National Scholarship Portal schemes",
+    provider: "Government of India · National Scholarship Portal",
+    destination: "India",
+    level: "School, undergraduate, and postgraduate (scheme dependent)",
+    type: "Government scholarship directory",
+    coverage: "Benefits and eligible student groups vary by central and state scheme",
+    eligibility: "The portal includes merit-based and welfare-based schemes. Domicile, income, course, institution, and category rules are set by each scheme.",
+    application: "Use the portal's scheme finder and eligibility checker, complete One Time Registration if required, and follow the scheme-specific application and institute-verification steps.",
+    officialUrl: "https://scholarships.gov.in/All-Scholarships",
+    tags: ["Government", "India", "Need-based", "Merit"],
+  },
+  {
+    name: "The Gates Scholarship",
+    provider: "The Gates Scholarship",
+    destination: "United States",
+    level: "First-year undergraduate",
+    type: "Need-based last-dollar scholarship",
+    coverage: "Covers remaining cost of attendance after other aid and the applicable student aid index methodology",
+    eligibility: "For eligible U.S. high school seniors who meet the program's citizenship or residency, Pell eligibility, academic, and full-time enrollment requirements.",
+    application: "Review the current cohort's eligibility and application dates on the official program site. This award is not for graduate study.",
+    officialUrl: "https://www.thegatesscholarship.org/scholarship/",
+    tags: ["Need-based", "Undergraduate", "United States"],
+  },
+  {
+    name: "Federal Pell Grant",
+    provider: "U.S. Department of Education",
+    destination: "United States",
+    level: "Eligible undergraduate study",
+    type: "Need-based federal grant",
+    coverage: "Award depends on financial need, enrollment, cost of attendance, and award-year rules; generally does not need to be repaid",
+    eligibility: "Primarily for eligible undergraduates who have not earned a bachelor's or professional degree and demonstrate financial need. U.S. federal aid eligibility rules apply.",
+    application: "Submit the FAFSA each award year and check eligibility with your college financial aid office.",
+    officialUrl: "https://studentaid.gov/understand-aid/types/grants/pell",
+    tags: ["Need-based", "United States", "Grant"],
+  },
+];
+
+export const AID_CHECKLIST = [
+  { id: "aid-school", label: "Ask each college about institutional grants and payment plans" },
+  { id: "aid-government", label: "Check government aid eligibility in your country of residence" },
+  { id: "aid-income", label: "Gather recent household income and tax documents" },
+  { id: "aid-transcript", label: "Request official transcripts and enrollment records" },
+  { id: "aid-references", label: "Ask recommenders early and share your deadlines" },
+  { id: "aid-essays", label: "Draft a financial-need statement and review each prompt" },
+  { id: "aid-verify", label: "Verify deadlines and required documents on the provider's official site" },
+];

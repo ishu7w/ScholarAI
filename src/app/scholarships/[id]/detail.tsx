@@ -188,6 +188,27 @@ export default function ScholarshipDetail({
           </motion.div>
           )}
 
+          {/* Eligibility rules published by the institution */}
+          <GlassCard>
+            <h2 className="font-semibold">Eligibility criteria</h2>
+            <p className="mt-1 text-xs text-muted">
+              These rules are set by {scholarship.provider}. The eligibility verdict below applies the hard gates to your profile.
+            </p>
+            <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+              <li>Minimum CGPA: {scholarship.criteria.minCgpa.toFixed(1)} / 10</li>
+              <li>Minimum attendance: {scholarship.criteria.minAttendance}%</li>
+              <li>Family income: {scholarship.criteria.maxIncome === null ? "No income cap" : `up to ${formatCurrency(scholarship.criteria.maxIncome, "USD")} per year`}</li>
+              <li>Study locations: {scholarship.criteria.locations.length ? scholarship.criteria.locations.join(", ") : "Any location"}</li>
+              <li>Fields of study: {scholarship.criteria.fields.length ? scholarship.criteria.fields.join(", ") : "Any field"}</li>
+              {scholarship.criteria.requiresResearch && <li>Research publication required</li>}
+              {scholarship.criteria.requiresLeadership && <li>Leadership experience required</li>}
+              {scholarship.criteria.womenOnly && <li>Applicants must identify as women</li>}
+              {scholarship.criteria.minorityOnly && <li>Minority-community eligibility restriction</li>}
+              {scholarship.criteria.sportsRequired && <li>Competitive sports participation required</li>}
+              {scholarship.criteria.disabilityPreferred && <li>Disability-inclusive preference (not a hard gate)</li>}
+            </ul>
+          </GlassCard>
+
           {/* score breakdown */}
           {ai && (
           <motion.div

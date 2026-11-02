@@ -8,7 +8,8 @@ export default async function ScholarshipPage({
 }: PageProps<"/scholarships/[id]">) {
   const { id } = await params;
   const ds = await getDataSource();
-  const scholarship = await ds.getScholarship(id);
+  const scholarships = await ds.getScholarships();
+  const scholarship = scholarships.find((item) => item.id === id) ?? null;
   if (!scholarship) notFound();
 
   const me = await getSessionProfile();
