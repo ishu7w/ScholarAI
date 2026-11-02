@@ -76,6 +76,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const set = (key: keyof typeof form) => (value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -83,6 +84,7 @@ export default function RegisterPage() {
   const goTo = (next: number) => {
     setDirection(next > step ? 1 : -1);
     setError(null);
+    setSuccessMessage(null);
     setStep(next);
   };
 
@@ -94,20 +96,28 @@ export default function RegisterPage() {
     }
     setLoading(true);
     setError(null);
-    const result = await signUpAction({
-      role,
-      name: form.name,
-      email: form.email,
-      password: form.password,
-      cgpa: form.gpa || undefined,
-      year: form.year || undefined,
-      field: form.field,
-      achievementsText: form.achievements || undefined,
-    });
-    if (result.ok) {
-      router.push(role === "student" ? "/dashboard/student" : "/dashboard/institution");
-    } else {
-      setError(result.error);
+    try {
+      const result = await signUpAction({
+        role,
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        cgpa: form.gpa || undefined,
+        year: form.year || undefined,
+        field: form.field,
+        achievementsText: form.achievements || undefined,
+      });
+      if (result.ok && result.redirectTo) {
+        router.push(result.redirectTo);
+      } else if (result.ok) {
+        setSuccessMessage(result.message ?? "Account created. Sign in to continue.");
+        setLoading(false);
+      } else {
+        setError(result.error);
+        setLoading(false);
+      }
+    } catch {
+      setError("We could not create your account. Please try again.");
       setLoading(false);
     }
   };
@@ -360,7 +370,8 @@ export default function RegisterPage() {
                       <p className="ed-mono-body text-[10px] leading-relaxed opacity-50">
                         BY PROCEEDING YOU ACKNOWLEDGE FAIR USE OF THE AI
                         EVALUATION SYSTEM. SCORES ARE DETERMINISTIC AND
-                        AUDITABLE. DEMO BUILD — NO REAL DATA IS STORED.
+                        AUDITABLE. YOUR ACCOUNT IS CREATED THROUGH THE
+                        CONFIGURED AUTHENTICATION PROVIDER.
                       </p>
                     </div>
                   )}
@@ -376,6 +387,17 @@ export default function RegisterPage() {
               >
                 <span className="ed-marker" aria-hidden />
                 <span className="ed-mono text-[var(--ed-vermilion)]">{error}</span>
+              </div>
+            )}
+            {successMessage && (
+              <div
+                role="status"
+                className="mt-8 border border-[var(--ed-ink)] px-4 py-3"
+              >
+                <span className="ed-mono">{successMessage} </span>
+                <Link href="/login" className="ed-mono ed-vermilion hover:underline">
+                  SIGN IN
+                </Link>
               </div>
             )}
             <div className="mt-14 flex items-center justify-between border-t border-[var(--ed-hairline)] pt-8">

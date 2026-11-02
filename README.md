@@ -16,7 +16,7 @@ The app runs in one of two modes, chosen at runtime by which environment variabl
 |---|---|---|
 | **Trigger** | no env vars set | `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` set (auth), `DATABASE_URL` set (data) |
 | **Data** | deterministic seed data from `src/lib/data.ts`, in module memory | Postgres via Drizzle |
-| **Auth** | a single seeded student persona is signed in automatically; any credentials "succeed" | real Supabase Auth, three roles, RLS-enforced |
+| **Auth** | a single seeded student persona is shown; sign-in is demo-only and new accounts are not stored | real Supabase Auth, three roles, RLS-enforced |
 | **Writes** | applications persist in memory for the session; institution/admin writes no-op | persisted, audit-logged |
 | **Uploads** | unavailable (no storage backend) | private Supabase Storage bucket + verification pipeline |
 | **Realtime** | no socket; the notification bell polls | Postgres CDC on `notifications` and `applications` |

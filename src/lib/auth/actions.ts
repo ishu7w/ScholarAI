@@ -1,9 +1,9 @@
 "use server";
 
 // ─────────────────────────────────────────────────────────────
-// Auth server actions. In demo mode (no Supabase env) every
-// action succeeds without persistence — preserving the original
-// "any credentials work" demo behavior.
+// Auth server actions. Demo mode is intentionally read-only for accounts:
+// never report that a user was created unless persistent auth and profile
+// storage are available.
 // ─────────────────────────────────────────────────────────────
 
 import { z } from "zod";
@@ -14,7 +14,9 @@ import { isLiveMode, hasDatabase } from "@/lib/env";
 import { db, schema } from "@/lib/db/client";
 import { checkRateLimit, formatRetryAfter } from "@/lib/rate-limit";
 
-export type AuthResult = { ok: true } | { ok: false; error: string };
+export type AuthResult =
+  | { ok: true; redirectTo?: string; message?: string }
+  | { ok: false; error: string };
 
 // Per-email throttles on the credential endpoints. Keyed on the submitted
 // email so one account's lockout never affects another's — and deliberately
@@ -63,7 +65,13 @@ export async function signUpAction(input: unknown): Promise<AuthResult> {
   );
   if (!gate.allowed) return { ok: false, error: throttled(gate.retryAfterMs) };
 
-  if (!isLiveMode()) return { ok: true }; // demo mode: simulated success
+  if (!isLiveMode() || !hasDatabase()) {
+    return {
+      ok: false,
+      error:
+        "Account creation is unavailable in demo mode. Configure Supabase Auth and DATABASE_URL to create a persistent account.",
+    };
+  }
 
   const supabase = await getSupabaseServer();
   if (!supabase) return { ok: false, error: "Auth service unavailable" };
@@ -72,6 +80,7 @@ export async function signUpAction(input: unknown): Promise<AuthResult> {
   // straight into a session — no email round-trip for this product.
   const admin = getSupabaseAdmin();
   let userId: string;
+  let hasSession = false;
   if (admin) {
     const { data: created, error } = await admin.auth.admin.createUser({
       email: data.email,
@@ -91,6 +100,7 @@ export async function signUpAction(input: unknown): Promise<AuthResult> {
       password: data.password,
     });
     if (signInErr) return { ok: false, error: signInErr.message };
+    hasSession = true;
   } else {
     const { data: signUp, error } = await supabase.auth.signUp({
       email: data.email,
@@ -99,6 +109,7 @@ export async function signUpAction(input: unknown): Promise<AuthResult> {
     if (error) return { ok: false, error: error.message };
     if (!signUp.user) return { ok: false, error: "Sign-up did not return a user" };
     userId = signUp.user.id;
+    hasSession = Boolean(signUp.session);
   }
 
   // Profile rows are created with the service role: at this point the
@@ -138,7 +149,14 @@ export async function signUpAction(input: unknown): Promise<AuthResult> {
       return { ok: false, error: "Account created but profile setup failed — contact support" };
     }
   }
-  return { ok: true };
+  const redirectTo =
+    data.role === "institution" ? "/dashboard/institution" : "/dashboard/student";
+  return hasSession
+    ? { ok: true, redirectTo }
+    : {
+        ok: true,
+        message: "Account created. Check your email to confirm it, then sign in.",
+      };
 }
 
 const signInSchema = z.object({
