@@ -13,26 +13,17 @@ export interface SessionProfile {
   avatarHue: number;
 }
 
-// Demo persona — mirrors the original hardcoded UI identity.
-const DEMO_SESSION: SessionProfile = {
-  id: "stu-aarya",
-  role: "student",
-  name: "Aarya Sharma",
-  email: "aarya@university.edu",
-  avatarHue: 258,
-};
-
-/** Current signed-in profile; demo persona in demo mode; null when
- *  live and signed out. Cached per request. */
+/** Current persisted user profile; null when auth or profile storage is
+ *  unavailable, or when no valid user session exists. Cached per request. */
 export const getSessionProfile = cache(async (): Promise<SessionProfile | null> => {
-  if (!isLiveMode()) return DEMO_SESSION;
+  if (!isLiveMode() || !hasDatabase()) return null;
 
   const supabase = await getSupabaseServer();
   if (!supabase) return null;
   const { data } = await supabase.auth.getUser();
   if (!data.user) return null;
 
-  if (hasDatabase()) {
+  try {
     const rows = await db()
       .select()
       .from(schema.profiles)
@@ -42,13 +33,8 @@ export const getSessionProfile = cache(async (): Promise<SessionProfile | null> 
     if (p && !p.disabled) {
       return { id: p.id, role: p.role, name: p.name, email: p.email, avatarHue: p.avatarHue };
     }
-    return null;
+  } catch (cause) {
+    console.error("profile lookup failed while resolving session:", cause);
   }
-  return {
-    id: data.user.id,
-    role: "student",
-    name: data.user.email ?? "User",
-    email: data.user.email ?? "",
-    avatarHue: 258,
-  };
+  return null;
 });

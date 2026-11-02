@@ -184,28 +184,46 @@ export async function signInAction(input: unknown): Promise<SignInResult> {
   );
   if (!gate.allowed) return { ok: false, error: throttled(gate.retryAfterMs) };
 
-  if (!isLiveMode()) return { ok: true, redirectTo: "/dashboard/student" };
+  if (!isLiveMode() || !hasDatabase()) {
+    return {
+      ok: false,
+      error:
+        "Sign-in is unavailable because persistent authentication is not configured. Set up Supabase Auth and DATABASE_URL, then try again.",
+    };
+  }
 
   const supabase = await getSupabaseServer();
   if (!supabase) return { ok: false, error: "Auth service unavailable" };
 
-  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
   if (error) return { ok: false, error: error.message };
 
-  // Role decides the landing dashboard.
-  let role = "student";
-  if (hasDatabase()) {
-    const rows = await db()
+  // A valid Auth identity without a provisioned application profile must
+  // never silently become a student. Sign it back out and fail closed.
+  let rows;
+  try {
+    rows = await db()
       .select({ role: schema.profiles.role, disabled: schema.profiles.disabled })
       .from(schema.profiles)
       .where(eqId(data.user.id))
       .limit(1);
-    if (rows[0]?.disabled) {
-      await supabase.auth.signOut();
-      return { ok: false, error: "This account has been disabled" };
-    }
-    role = rows[0]?.role ?? "student";
+  } catch (cause) {
+    console.error("profile lookup failed during sign-in:", cause);
+    await supabase.auth.signOut();
+    return { ok: false, error: "We could not load your account. Please try again." };
   }
+  if (!rows[0]) {
+    await supabase.auth.signOut();
+    return { ok: false, error: "This account is not set up yet. Contact your administrator." };
+  }
+  if (rows[0].disabled) {
+    await supabase.auth.signOut();
+    return { ok: false, error: "This account has been disabled" };
+  }
+  const role = rows[0].role;
   const redirectTo =
     role === "admin"
       ? "/dashboard/admin"
@@ -237,7 +255,13 @@ export async function resetPasswordAction(email: string): Promise<AuthResult> {
   );
   if (!gate.allowed) return { ok: false, error: throttled(gate.retryAfterMs) };
 
-  if (!isLiveMode()) return { ok: true };
+  if (!isLiveMode() || !hasDatabase()) {
+    return {
+      ok: false,
+      error:
+        "Password reset is unavailable until Supabase Auth and DATABASE_URL are configured.",
+    };
+  }
 
   const supabase = await getSupabaseServer();
   if (!supabase) return { ok: false, error: "Auth service unavailable" };

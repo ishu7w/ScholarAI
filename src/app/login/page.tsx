@@ -40,14 +40,24 @@ function LoginForm() {
     setLoading(true);
     setError(null);
     const fd = new FormData(e.currentTarget);
-    const result = await signInAction({
-      email: fd.get("email"),
-      password: fd.get("password"),
-    });
-    if (result.ok) {
-      router.push(searchParams.get("next") ?? result.redirectTo);
-    } else {
-      setError(result.error);
+    try {
+      const result = await signInAction({
+        email: fd.get("email"),
+        password: fd.get("password"),
+      });
+      if (result.ok) {
+        const requestedPath = searchParams.get("next");
+        const safeNext =
+          requestedPath?.startsWith("/") && !requestedPath.startsWith("//")
+            ? requestedPath
+            : result.redirectTo;
+        router.push(safeNext);
+      } else {
+        setError(result.error);
+        setLoading(false);
+      }
+    } catch {
+      setError("We could not sign you in. Please try again.");
       setLoading(false);
     }
   };
@@ -101,8 +111,7 @@ function LoginForm() {
           )}
         </button>
         <p className="text-center text-xs text-muted">
-          Demo accounts: student@demo.scholarai.app · institution@… · admin@…
-          (password: scholarai-demo)
+          Sign in with the email and password for your registered ScholarAI account.
         </p>
     </form>
   );
