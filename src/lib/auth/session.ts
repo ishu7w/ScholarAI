@@ -44,7 +44,7 @@ const DEMO_PROFILES: Record<SessionProfile["role"], SessionProfile> = {
 export const getSessionProfile = cache(async (): Promise<SessionProfile | null> => {
   if (!isLiveMode() && !hasDatabase()) {
     const role = (await cookies()).get(DEMO_ROLE_COOKIE)?.value;
-    return role && role in DEMO_PROFILES
+    return role && Object.hasOwn(DEMO_PROFILES, role)
       ? DEMO_PROFILES[role as SessionProfile["role"]]
       : null;
   }

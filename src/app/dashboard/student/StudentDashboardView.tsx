@@ -21,7 +21,7 @@ import { useRealtime } from "@/hooks/useRealtime";
 import { computeAIScore, generateRoadmap, rankScholarships } from "@/lib/ai-engine";
 import type { ApplicationRecord } from "@/lib/datasource";
 import type { Scholarship, StudentProfile } from "@/lib/types";
-import { daysUntil, formatCurrency, formatDate } from "@/lib/utils";
+import { daysUntil, formatCurrency, formatDate, isDeadlinePassed } from "@/lib/utils";
 
 const container = {
   hidden: {},
@@ -71,6 +71,7 @@ export default function StudentDashboardView({
   const topMatches = ranked.filter((r) => r.eligible).slice(0, 3);
   const roadmap = generateRoadmap(student).slice(0, 4);
   const deadlines = [...scholarships]
+    .filter((s) => !isDeadlinePassed(s.deadline))
     .sort((a, b) => +new Date(a.deadline) - +new Date(b.deadline))
     .slice(0, 4);
 
@@ -212,11 +213,14 @@ export default function StudentDashboardView({
                         <div className="text-xs text-muted">{formatDate(s.deadline)}</div>
                       </div>
                       <Badge tone={d < 30 ? "danger" : d < 60 ? "warning" : "neutral"}>
-                        <Clock className="h-3 w-3" /> {d}d
+                        <Clock className="h-3 w-3" /> {d === 0 ? "Due today" : `${d}d`}
                       </Badge>
                     </li>
                   );
                 })}
+                {deadlines.length === 0 && (
+                  <li className="py-3 text-sm text-muted">No open scholarship deadlines right now.</li>
+                )}
               </ul>
             </GlassCard>
 

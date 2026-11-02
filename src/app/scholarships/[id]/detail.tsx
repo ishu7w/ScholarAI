@@ -46,6 +46,7 @@ export default function ScholarshipDetail({
   const match = student ? matchScholarship(student, scholarship) : null;
   const ai = student ? computeAIScore(student) : null;
   const applied = Boolean(application && application.status !== "draft");
+  const deadlineDays = daysUntil(scholarship.deadline);
 
   const onApply = () => {
     setError(null);
@@ -98,9 +99,9 @@ export default function ScholarshipDetail({
                 <div>
                   <div className="flex items-center gap-1.5 font-[family-name:var(--font-space-grotesk)] text-2xl font-bold">
                     <CalendarDays className="h-5 w-5 text-warning" />
-                    {daysUntil(scholarship.deadline)}d
+                    {deadlineDays < 0 ? "Closed" : deadlineDays === 0 ? "Due today" : `${deadlineDays}d`}
                   </div>
-                  <div className="text-xs text-muted">Until {formatDate(scholarship.deadline)}</div>
+                  <div className="text-xs text-muted">{deadlineDays < 0 ? "Closed on" : "Deadline"} {formatDate(scholarship.deadline)}</div>
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5 font-[family-name:var(--font-space-grotesk)] text-2xl font-bold">
@@ -276,7 +277,11 @@ export default function ScholarshipDetail({
               )}
 
               {canApply && match ? (
-                <button
+                deadlineDays < 0 && !applied ? (
+                  <button disabled className="btn-ghost mt-5 w-full cursor-not-allowed opacity-60">
+                    Applications closed
+                  </button>
+                ) : <button
                   onClick={onApply}
                   disabled={pending || (!applied && !match.eligible)}
                   className={applied ? "btn-ghost mt-5 w-full" : "btn-primary mt-5 w-full"}

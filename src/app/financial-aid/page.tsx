@@ -4,7 +4,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import { ArrowUpRight, Check, ExternalLink, HandCoins, Search } from "lucide-react";
 import DashboardShell from "@/components/layout/DashboardShell";
 import { Badge, GlassCard } from "@/components/ui/primitives";
-import { AID_CHECKLIST, FUNDING_OPPORTUNITIES } from "@/lib/funding";
+import { AID_CHECKLIST, FUNDING_DATE_CHECKED, FUNDING_OPPORTUNITIES } from "@/lib/funding";
 
 const numberField = "input-premium mt-1";
 const money = (value: number, currency: string) => new Intl.NumberFormat(undefined, {
@@ -127,7 +127,7 @@ export default function FinancialAidPage() {
 
       <section className="mt-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div><p className="mono-label text-primary-bright">VERIFIED STARTING POINTS</p><h2 className="mt-1 text-2xl font-semibold">Scholarships and aid programs</h2><p className="mt-2 max-w-2xl text-sm text-muted">Official sources only. Program terms can change by country, university, and application cycle; confirm details before applying.</p></div>
+          <div><p className="mono-label text-primary-bright">VERIFIED STARTING POINTS</p><h2 className="mt-1 text-2xl font-semibold">Scholarships and aid programs</h2><p className="mt-2 max-w-2xl text-sm text-muted">Official sources only · cycle dates checked {FUNDING_DATE_CHECKED}. Program terms can change by country, university, and application cycle; confirm details before applying.</p></div>
           <div className="relative w-full sm:w-72"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search programs or destinations" className="input-premium !pl-10" aria-label="Search funding opportunities" /></div>
         </div>
         <div className="mt-5 grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
@@ -139,6 +139,7 @@ export default function FinancialAidPage() {
             <div className="mt-4 space-y-3 text-sm leading-relaxed">
               <p><span className="font-semibold">Typical level: </span>{item.level}</p>
               <p><span className="font-semibold">Who it may suit: </span>{item.eligibility}</p>
+              <p><span className="font-semibold">Current deadline: </span>{item.deadlineInfo ?? "Check the official program page; this cycle does not have one global date."}</p>
               <p><span className="font-semibold">How to apply: </span>{item.application}</p>
             </div>
             <a href={item.officialUrl} target="_blank" rel="noopener noreferrer" className="btn-primary mt-5 w-full justify-between !px-4 !py-3 text-sm">Visit official program <span className="flex items-center gap-1"><ExternalLink className="h-4 w-4" /><ArrowUpRight className="h-4 w-4" /></span></a>

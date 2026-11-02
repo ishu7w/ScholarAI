@@ -2,7 +2,7 @@ import "server-only";
 import type { SessionProfile } from "@/lib/auth/session";
 import { getDataSource, type ApplicationStatus } from "@/lib/datasource";
 import { computeAIScore, generateRoadmap, rankScholarships } from "@/lib/ai-engine";
-import { daysUntil } from "@/lib/utils";
+import { daysUntil, isDeadlinePassed } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────
 // The copilot's grounding. Every figure an answer may state is
@@ -137,7 +137,8 @@ export async function buildCopilotContext(
     decidedAt: a.decidedAt,
   }));
 
-  base.deadlines = [...scholarships]
+  base.deadlines = scholarships
+    .filter((s) => !isDeadlinePassed(s.deadline))
     .sort((a, b) => +new Date(a.deadline) - +new Date(b.deadline))
     .slice(0, MAX_DEADLINES)
     .map((s) => ({

@@ -142,8 +142,8 @@ export default function ExplorerView({
                     <Badge tone="neutral" className="!text-[10px]">
                       {r.scholarship.category}
                     </Badge>
-                    <Badge tone={d < 30 ? "danger" : "neutral"} className="!text-[10px]">
-                      {d}d left
+                    <Badge tone={d < 0 ? "neutral" : d < 30 ? "danger" : "neutral"} className="!text-[10px]">
+                      {d < 0 ? "Closed" : d === 0 ? "Due today" : `${d}d left`}
                     </Badge>
                   </div>
                   <h3 className="mt-3 font-semibold leading-snug">{r.scholarship.name}</h3>

@@ -14,6 +14,7 @@ import { getDataSource } from "@/lib/datasource";
 import { db, schema } from "@/lib/db/client";
 import { hasDatabase } from "@/lib/env";
 import { getSessionProfile } from "@/lib/auth/session";
+import { isDeadlinePassed } from "@/lib/utils";
 import {
   demoDeleteApplication,
   demoUpsertApplication,
@@ -43,7 +44,7 @@ export async function applyAction(scholarshipId: string): Promise<ActionResult> 
   }
 
   // Deadline gate — server-side truth, not a client check.
-  if (new Date(scholarship.deadline).getTime() < Date.now()) {
+  if (isDeadlinePassed(scholarship.deadline)) {
     return { ok: false, error: "This scholarship's deadline has passed" };
   }
 
